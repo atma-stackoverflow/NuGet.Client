@@ -8,6 +8,8 @@ jobs:
     demands:
       - DotNetFramework
       - msbuild
+  variables:
+    buildcounter: $[counter(variables['build.reason'], 0)]
 
   steps:
   - task: PowerShell@1
@@ -45,10 +47,7 @@ jobs:
       scriptType: "inlineScript"
       inlineScript: |
         try {
-          $revision = Get-Content $env:BUILDCOUNTERFILE
-          $newBuildCounter = [System.Decimal]::Parse($revision)
-          $newBuildCounter++
-          Set-Content $env:BUILDCOUNTERFILE $newBuildCounter
+          $revision = $env:BUILDCOUNTER
           $msbuildExe = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\bin\msbuild.exe'
           $productVersion = & $msbuildExe $env:BUILD_REPOSITORY_LOCALPATH\build\config.props /v:m /nologo /t:GetSemanticVersion
           $productVersion = $productVersion.Trim()
