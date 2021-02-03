@@ -9,7 +9,7 @@ jobs:
       - DotNetFramework
       - msbuild
   variables:
-    buildcounter: $[counter(variables['build.reason'], 0)]
+    -name: semanticversion
 
   steps:
   - task: PowerShell@1
@@ -41,18 +41,32 @@ jobs:
         InitializeAllTestsToPending -PersonalAccessToken $(NuGetLurkerPersonalAccessToken) -CommitSha $(Build.SourceVersion)
 
   - task: PowerShell@1
-    displayName: "Update Build Number"
-    name: "updatebuildnumber"
+    displayName: "Update Semantic Version"
+    name: "updatesemanticversion"
     inputs:
       scriptType: "inlineScript"
       inlineScript: |
         try {
-          $revision = $env:BUILDCOUNTER
-          $newBuildCounter = [System.Decimal]::Parse($revision)
           $msbuildExe = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\bin\msbuild.exe'
           $productVersion = & $msbuildExe $env:BUILD_REPOSITORY_LOCALPATH\build\config.props /v:m /nologo /t:GetSemanticVersion
           $productVersion = $productVersion.Trim()
-          $FullBuildNumber = "$productVersion.$newBuildCounter"
+          Write-Host "##vso[task.setvariable variable=semanticversion;isOutput=true]$productVersion"
+        } catch {
+          Write-Host "##vso[task.LogIssue type=error;]Unable to update semantic version"
+          exit 1
+        }
+
+  - task: PowerShell@1
+    displayName: "Update Build Number"
+    name: "updatebuildnumber"
+    variables:
+     buildcounter: $[counter(variables['semanticversion'], 7097)]
+    inputs:
+      scriptType: "inlineScript"
+      inlineScript: |
+        try {
+          $FullBuildNumber = "$env:SEMANTICVERSION.$env:BUILDCOUNTER"
+          $msbuildExe = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\bin\msbuild.exe'
           $targetChannel = & $msbuildExe $env:BUILD_REPOSITORY_LOCALPATH\build\config.props /v:m /nologo /t:GetVsTargetChannel
           $targetChannel = $targetChannel.Trim()
           $targetMajorVersion = & $msbuildExe $env:BUILD_REPOSITORY_LOCALPATH\build\config.props /v:m /nologo /t:GetVsTargetMajorVersion
@@ -60,7 +74,7 @@ jobs:
           Write-Host "##vso[task.setvariable variable=VsTargetChannel;isOutput=true]$targetChannel"
           Write-Host "##vso[task.setvariable variable=VsTargetMajorVersion;isOutput=true]$targetMajorVersion"
           Write-Host "##vso[build.updatebuildnumber]$FullBuildNumber"
-          Write-Host "##vso[task.setvariable variable=BuildNumber;isOutput=true]$newBuildCounter"
+          Write-Host "##vso[task.setvariable variable=BuildNumber;isOutput=true]$env:BUILDCOUNTER"
           Write-Host "##vso[task.setvariable variable=FullVstsBuildNumber;isOutput=true]$FullBuildNumber"
         } catch {
           Write-Host "##vso[task.LogIssue type=error;]Unable to set build number"
