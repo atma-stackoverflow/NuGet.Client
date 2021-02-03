@@ -9,7 +9,8 @@ jobs:
       - DotNetFramework
       - msbuild
   variables:
-    -name: semanticversion
+    semanticversion:
+    buildcounter: $[counter(variables['semanticversion'], 7097)]
 
   steps:
   - task: PowerShell@1
@@ -58,9 +59,7 @@ jobs:
 
   - task: PowerShell@1
     displayName: "Update Build Number"
-    name: "updatebuildnumber"
-    variables:
-     buildcounter: $[counter(variables['semanticversion'], 7097)]
+    name: "updatebuildnumber"     
     inputs:
       scriptType: "inlineScript"
       inlineScript: |
