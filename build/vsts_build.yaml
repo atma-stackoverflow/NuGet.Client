@@ -50,7 +50,7 @@ jobs:
           $msbuildExe = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\bin\msbuild.exe'
           $productVersion = & $msbuildExe $env:BUILD_REPOSITORY_LOCALPATH\build\config.props /v:m /nologo /t:GetSemanticVersion
           $productVersion = $productVersion.Trim()
-          Write-Host "##vso[task.setvariable variable=semanticversion;isOutput=true]$productVersion"
+          Write-Host "##vso[task.setvariable variable=semanticversion;]$productVersion"
           Write-Output "$semanticversion"
         } catch {
           Write-Host "##vso[task.LogIssue type=error;]Unable to update semantic version"
