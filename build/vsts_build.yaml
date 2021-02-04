@@ -9,7 +9,6 @@ jobs:
       - DotNetFramework
       - msbuild
   variables:
-    semanticversion:
     buildcounter: $[counter(variables['semanticversion'], 7097)]
 
   steps:
@@ -52,7 +51,7 @@ jobs:
           $productVersion = & $msbuildExe $env:BUILD_REPOSITORY_LOCALPATH\build\config.props /v:m /nologo /t:GetSemanticVersion
           $productVersion = $productVersion.Trim()
           Write-Host "##vso[task.setvariable variable=semanticversion;isOutput=true]$productVersion"
-          Write-Output "$productVersion"
+          echo $(semanticversion)
         } catch {
           Write-Host "##vso[task.LogIssue type=error;]Unable to update semantic version"
           exit 1
